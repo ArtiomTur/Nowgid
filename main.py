@@ -89,7 +89,7 @@ addresses = {
         },
     },
     'low': {  # Малобюджетные маршруты (ТВОИ ДАННЫЕ + ЗАГЛУШКИ)
-        # ТВОИ РЕАЛЬНЫЕ МЕСТА
+        # ТВОИ РЕАЛЬНЫЕ МЕСТА (ID БЕЗ ПРОБЕЛОВ!)
         'hoztel': {
             'address': 'хостел "турист", Адрес: ул. розважа, 11/1',
             'coordinates': (58.525747, 31.276239),
@@ -98,7 +98,7 @@ addresses = {
             'photo_url': 'https://example.com/photo1.jpg',
             'type': 'prozhivanie'
         },
-        'chainaya_lozhka': {
+        'chainaya_lozhka': {  # ID без пробелов
             'address': 'ресторан быстрого питания "чайная ложка", Адрес: большая санкт петербургская, 25 в ТЦ "Русь"',
             'coordinates': (58.533020, 31.267274),
             'description': 'Описание для ресторана',
@@ -123,8 +123,8 @@ addresses = {
             'type': 'platnie'
         },
 
-        # ЗАГЛУШКИ (дополнительные варианты)
-        'prozhivanie_zaglushka1': {
+        # ЗАГЛУШКИ
+        'prozhivanie_zaglushka': {
             'address': 'Заглушка адреса для проживания',
             'coordinates': None,
             'description': 'Заглушка описания для проживания',
@@ -132,7 +132,7 @@ addresses = {
             'photo_url': None,
             'type': 'prozhivanie'
         },
-        'pitanie_zaglushka1': {
+        'pitanie_zaglushka': {
             'address': 'Заглушка адреса для питания',
             'coordinates': None,
             'description': 'Заглушка описания для питания',
@@ -140,7 +140,7 @@ addresses = {
             'photo_url': None,
             'type': 'pitanie'
         },
-        'besplatnie_zaglushka1': {
+        'besplatnie_zaglushka': {
             'address': 'Заглушка адреса для бесплатных',
             'coordinates': None,
             'description': 'Заглушка описания для бесплатных',
@@ -148,7 +148,7 @@ addresses = {
             'photo_url': None,
             'type': 'besplatnie'
         },
-        'platnie_zaglushka1': {
+        'platnie_zaglushka': {
             'address': 'Заглушка адреса для платных',
             'coordinates': None,
             'description': 'Заглушка описания для платных',
@@ -189,7 +189,7 @@ def show_place_types(call):
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
 
-    # Показываем типы мест (Проживание, Питание и т.д.)
+    # Показываем типы мест
     for type_key, type_name in place_types.items():
         markup.add(InlineKeyboardButton(
             type_name,
@@ -244,21 +244,20 @@ def show_address_details(call):
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton('Назад', callback_data=f'type_{category_id}_{place_type}'))
 
+    message_text = f"📍 {address_info['address']}\n\n📝 {description}"
+
     if photo_url:
-        caption = f"📍 {address_info['address']}\n\n📝 {description}"
         try:
-            photo_msg = bot.send_photo(call.message.chat.id, photo_url, caption=caption, reply_markup=markup)
+            photo_msg = bot.send_photo(call.message.chat.id, photo_url, caption=message_text, reply_markup=markup)
             if call.message.chat.id not in message_ids:
                 message_ids[call.message.chat.id] = []
             message_ids[call.message.chat.id].append(photo_msg.message_id)
         except:
-            message_text = f"📍 {address_info['address']}\n\n📝 {description}"
             msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
             if call.message.chat.id not in message_ids:
                 message_ids[call.message.chat.id] = []
             message_ids[call.message.chat.id].append(msg.message_id)
     else:
-        message_text = f"📍 {address_info['address']}\n\n📝 {description}"
         msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
         if call.message.chat.id not in message_ids:
             message_ids[call.message.chat.id] = []

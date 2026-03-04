@@ -28,9 +28,9 @@ category_ids = {
 # Обратные соответствия
 id_to_category = {v: k for k, v in category_ids.items()}
 
-# Адреса по категориям с НЕСКОЛЬКИМИ ВАРИАНТАМИ под каждой
+# Адреса по категориям
 addresses = {
-    'high': {  # Высокобюджетная категория
+    'high': {  # Высокобюджетная категория (оставляем как есть)
         'заглушка1': {
             'address': 'Заглушка адреса',
             'coordinates': None,
@@ -60,121 +60,94 @@ addresses = {
             'photo_url': None
         },
     },
-    'low': {  # Малобюджетные маршруты - ТЕПЕРЬ С НЕСКОЛЬКИМИ ВАРИАНТАМИ
-        'проживание_1': {
-            'address': 'хостел "Турист", Адрес: ул. Розважа, 11/1',
+    'low': {  # Малобюджетные маршруты (ТВОИ ДАННЫЕ + ЗАГЛУШКИ)
+        # ТВОИ РЕАЛЬНЫЕ ДАННЫЕ (ОСТАВЛЯЕМ)
+        'проживание': {
+            'address': 'хостел "турист", Адрес: ул. розважа, 11/1',
             'coordinates': (58.525747, 31.276239),
-            'description': 'Бюджетный хостел в центре. Есть общая кухня, wi-fi, парковка.',
-            'display_name': 'Хостел "Турист"',
-            'photo_url': 'https://example.com/photo1.jpg',
-            'category_type': 'проживание'  # Для группировки
+            'description': 'Описание хостела турист',
+            'display_name': '🏨 Хостел "Турист"',
+            'photo_url': 'https://example.com/photo1.jpg'
         },
-        'проживание_2': {
-            'address': 'Отель "Волхов", Адрес: ул. Ленина, 4',
-            'coordinates': (58.521944, 31.275833),
-            'description': 'Недорогой отель с завтраками. Номера с удобствами.',
-            'display_name': 'Отель "Волхов"',
-            'photo_url': None,
-            'category_type': 'проживание'
-        },
-        'проживание_3': {
-            'address': 'Гостевой дом "Уют", Адрес: наб. Александра Невского, 22',
-            'coordinates': (58.526389, 31.279444),
-            'description': 'Гостевой дом рядом с Кремлем. Чисто, уютно, недорого.',
-            'display_name': 'Гостевой дом "Уют"',
-            'photo_url': None,
-            'category_type': 'проживание'
-        },
-        'питание_1': {
-            'address': 'ресторан "Чайная ложка", Адрес: ул. Большая Санкт-Петербургская, 25, ТЦ "Русь"',
+        'питание': {
+            'address': 'ресторан быстрого питания "чайная ложка", Адрес: большая санкт петербургская, 25 в ТЦ "Русь"',
             'coordinates': (58.533020, 31.267274),
-            'description': 'Ресторан быстрого питания. Блины, салаты, супы. Недорого и вкусно.',
-            'display_name': 'Чайная ложка',
-            'photo_url': 'https://ibb.co/4nTmZZQQ',
-            'category_type': 'питание'
+            'description': 'Описание для ресторана',
+            'display_name': '🍽️ Чайная ложка',
+            'photo_url': 'https://ibb.co/4nTmZZQQ'
         },
-        'питание_2': {
-            'address': 'Кафе "Визит", Адрес: ул. Студенческая, 10',
-            'coordinates': (58.531111, 31.273611),
-            'description': 'Уютное кафе с домашней кухней. Комплексные обеды.',
-            'display_name': 'Кафе "Визит"',
-            'photo_url': None,
-            'category_type': 'питание'
+        'бесплатные развлечения': {
+            'address': 'Прогулка по кремлю и набережной',
+            'coordinates': None,
+            'description': 'Прогулка по кремлю и по набережной Александра Невского',
+            'display_name': '🚶 Кремль и набережная',
+            'photo_url': None
         },
-        'питание_3': {
-            'address': 'Столовая №1, Адрес: пр. Мира, 5',
-            'coordinates': (58.529722, 31.277500),
-            'description': 'Городская столовая. Большой выбор, низкие цены.',
-            'display_name': 'Столовая №1',
-            'photo_url': None,
-            'category_type': 'питание'
-        },
-        'бесплатные развлечения_1': {
-            'address': 'Новгородский Кремль (Детинец)',
-            'coordinates': (58.522222, 31.275000),
-            'description': 'Прогулка по территории Кремля. Бесплатный вход на территорию.',
-            'display_name': 'Новгородский Кремль',
-            'photo_url': None,
-            'category_type': 'бесплатные развлечения'
-        },
-        'бесплатные развлечения_2': {
-            'address': 'Набережная Александра Невского',
-            'coordinates': (58.525833, 31.281389),
-            'description': 'Прогулка вдоль реки Волхов. Красивые виды, скамейки.',
-            'display_name': 'Набережная',
-            'photo_url': None,
-            'category_type': 'бесплатные развлечения'
-        },
-        'бесплатные развлечения_3': {
-            'address': 'Ярославово Дворище',
-            'coordinates': (58.520556, 31.276389),
-            'description': 'Древний архитектурный комплекс. Бесплатный осмотр территории.',
-            'display_name': 'Ярославово Дворище',
-            'photo_url': None,
-            'category_type': 'бесплатные развлечения'
-        },
-        'платные развлечения_1': {
-            'address': 'Грановитая палата, территория Кремля, 14а.',
+        'платные развлечения': {
+            'address': 'территория Кремля, 14а.',
             'coordinates': (58.522660, 31.275844),
-            'description': 'Экскурсия по Грановитой палате. Вход платный.',
-            'display_name': 'Грановитая палата',
-            'photo_url': None,
-            'category_type': 'платные развлечения'
+            'description': 'Экскурсия по грановитой палате',
+            'display_name': '🏛️ Грановитая палата',
+            'photo_url': None
         },
-        'платные развлечения_2': {
-            'address': 'Софийский собор, Кремль',
-            'coordinates': (58.522222, 31.275000),
-            'description': 'Древнейший православный храм России. Вход платный.',
-            'display_name': 'Софийский собор',
-            'photo_url': None,
-            'category_type': 'платные развлечения'
+
+        # ДОБАВЛЕННЫЕ ЗАГЛУШКИ (для вторых вариантов)
+        'проживание_заглушка2': {
+            'address': 'Заглушка адреса для второго варианта проживания',
+            'coordinates': None,
+            'description': 'Заглушка описания для второго варианта проживания',
+            'display_name': '🏨 Проживание (вариант 2)',
+            'photo_url': None
         },
-        'платные развлечения_3': {
-            'address': 'Музей деревянного зодчества "Витославлицы"',
-            'coordinates': (58.536667, 31.266389),
-            'description': 'Музей под открытым небом. Старинные деревянные постройки.',
-            'display_name': 'Витославлицы',
-            'photo_url': None,
-            'category_type': 'платные развлечения'
+        'питание_заглушка2': {
+            'address': 'Заглушка адреса для второго варианта питания',
+            'coordinates': None,
+            'description': 'Заглушка описания для второго варианта питания',
+            'display_name': '🍽️ Питание (вариант 2)',
+            'photo_url': None
+        },
+        'бесплатные_заглушка2': {
+            'address': 'Заглушка адреса для второго варианта бесплатных развлечений',
+            'coordinates': None,
+            'description': 'Заглушка описания для второго варианта бесплатных развлечений',
+            'display_name': '🚶 Бесплатно (вариант 2)',
+            'photo_url': None
+        },
+        'платные_заглушка2': {
+            'address': 'Заглушка адреса для второго варианта платных развлечений',
+            'coordinates': None,
+            'description': 'Заглушка описания для второго варианта платных развлечений',
+            'display_name': '🏛️ Платно (вариант 2)',
+            'photo_url': None
+        },
+
+        # ДОБАВЛЕННЫЕ ЗАГЛУШКИ (для третьих вариантов)
+        'проживание_заглушка3': {
+            'address': 'Заглушка адреса для третьего варианта проживания',
+            'coordinates': None,
+            'description': 'Заглушка описания для третьего варианта проживания',
+            'display_name': '🏨 Проживание (вариант 3)',
+            'photo_url': None
+        },
+        'питание_заглушка3': {
+            'address': 'Заглушка адреса для третьего варианта питания',
+            'coordinates': None,
+            'description': 'Заглушка описания для третьего варианта питания',
+            'display_name': '🍽️ Питание (вариант 3)',
+            'photo_url': None
         }
     }
 }
 
-# Словарь для группировки мест по типам
-place_categories = {
-    'проживание': 'Проживание',
-    'питание': 'Питание',
-    'бесплатные развлечения': 'Бесплатные развлечения',
-    'платные развлечения': 'Платные развлечения'
-}
 
-
+# Обработчик команд
 @bot.message_handler(commands=['start', 'kommands'])
 def main(message):
     bot.send_message(message.chat.id,
-                     'Команды для данного бота: \nлокации или /location - Показывает наши направления и расположение маршрутов в соответствии с этими направлениями;')
+                     'Команды для данного бота: \nлокации или /location - Показывает наши направления и расположение маршрутов')
 
 
+# Обработчик команд "локации"
 @bot.message_handler(func=lambda message: message.text.lower() == 'локации' or message.text.lower() == '/location')
 def info(message):
     delete_previous_messages(message.chat.id)
@@ -189,6 +162,7 @@ def info(message):
     message_ids[message.chat.id].append(msg.message_id)
 
 
+# Обработчик callback-запроса с категориями
 @bot.callback_query_handler(func=lambda call: call.data.startswith('cat_'))
 def show_categories(call):
     delete_previous_messages(call.message.chat.id)
@@ -198,45 +172,21 @@ def show_categories(call):
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
 
-    # Для каждой категории мест показываем типы
-    for place_type, display_name in place_categories.items():
+    for place_id, place_info in addresses[category_id].items():
         markup.add(InlineKeyboardButton(
-            display_name,
-            callback_data=f'type_{category_id}_{place_type}'
+            place_info['display_name'],
+            callback_data=f'place_{category_id}_{place_id}'
         ))
 
     markup.add(InlineKeyboardButton('Назад', callback_data='back_to_categories'))
-    msg = bot.send_message(call.message.chat.id, f'Выберите тип места в {category_name}:', reply_markup=markup)
+    msg = bot.send_message(call.message.chat.id, f'Выберите направление {category_name}:', reply_markup=markup)
 
     if call.message.chat.id not in message_ids:
         message_ids[call.message.chat.id] = []
     message_ids[call.message.chat.id].append(msg.message_id)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith('type_'))
-def show_places_by_type(call):
-    delete_previous_messages(call.message.chat.id)
-    _, category_id, place_type = call.data.split('_')
-
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 1
-
-    # Показываем все места данного типа
-    for place_id, place_info in addresses[category_id].items():
-        if place_info.get('category_type') == place_type:
-            markup.add(InlineKeyboardButton(
-                place_info['display_name'],
-                callback_data=f'place_{category_id}_{place_id}'
-            ))
-
-    markup.add(InlineKeyboardButton('Назад', callback_data=f'cat_{category_id}'))
-    msg = bot.send_message(call.message.chat.id, f'Выберите место:', reply_markup=markup)
-
-    if call.message.chat.id not in message_ids:
-        message_ids[call.message.chat.id] = []
-    message_ids[call.message.chat.id].append(msg.message_id)
-
-
+# Обработчик callback-запроса с направлениями
 @bot.callback_query_handler(func=lambda call: call.data.startswith('place_'))
 def show_address_details(call):
     delete_previous_messages(call.message.chat.id)
@@ -247,13 +197,10 @@ def show_address_details(call):
     description = address_info['description']
     photo_url = address_info.get('photo_url')
 
-    # Определяем тип места для кнопки "Назад"
-    place_type = address_info.get('category_type', '')
-
     markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton('Назад', callback_data=f'type_{category_id}_{place_type}'))
+    markup.add(InlineKeyboardButton('Назад', callback_data=f'cat_{category_id}'))
 
-    # Отправка фото (если есть)
+    # Если есть фото URL - отправляем фото с подписью
     if photo_url:
         caption = f"📍 {address_info['address']}\n\n📝 {description}"
         try:
@@ -274,7 +221,7 @@ def show_address_details(call):
             message_ids[call.message.chat.id] = []
         message_ids[call.message.chat.id].append(msg.message_id)
 
-    # Отправка карты (если есть координаты)
+    # Проверка координат и отправка карты
     if coordinates and len(coordinates) == 2 and coordinates[0] is not None and coordinates[1] is not None:
         location_msg = bot.send_location(call.message.chat.id, latitude=coordinates[0], longitude=coordinates[1])
         if call.message.chat.id not in message_ids:
@@ -282,6 +229,7 @@ def show_address_details(call):
         message_ids[call.message.chat.id].append(location_msg.message_id)
 
 
+# Обработчик callback-запроса с кнопкой "Назад"
 @bot.callback_query_handler(func=lambda call: call.data == 'back_to_categories')
 def back_to_categories(call):
     delete_previous_messages(call.message.chat.id)
@@ -299,6 +247,7 @@ def back_to_categories(call):
     message_ids[call.message.chat.id].append(msg.message_id)
 
 
+# Запускаем бота
 if __name__ == '__main__':
     print("Бот запущен...")
     bot.polling()

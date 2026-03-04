@@ -89,7 +89,7 @@ addresses = {
         },
     },
     'low': {  # Малобюджетные маршруты (ТВОИ ДАННЫЕ + ЗАГЛУШКИ)
-        # ТВОИ РЕАЛЬНЫЕ МЕСТА (ID БЕЗ ПРОБЕЛОВ!)
+        # ТВОИ РЕАЛЬНЫЕ МЕСТА
         'hoztel': {
             'address': 'хостел "турист", Адрес: ул. розважа, 11/1',
             'coordinates': (58.525747, 31.276239),
@@ -98,7 +98,7 @@ addresses = {
             'photo_url': 'https://example.com/photo1.jpg',
             'type': 'prozhivanie'
         },
-        'chainaya_lozhka': {  # ID без пробелов
+        'chainaya_lozhka': {
             'address': 'ресторан быстрого питания "чайная ложка", Адрес: большая санкт петербургская, 25 в ТЦ "Русь"',
             'coordinates': (58.533020, 31.267274),
             'description': 'Описание для ресторана',
@@ -214,13 +214,22 @@ def show_places_by_type(call):
 
     # Показываем все места выбранного типа
     type_display_name = ""
+    count = 0
     for place_id, place_info in addresses[category_id].items():
         if place_info.get('type') == place_type:
+            count += 1
             markup.add(InlineKeyboardButton(
                 place_info['display_name'],
                 callback_data=f'place_{category_id}_{place_id}'
             ))
             type_display_name = place_types.get(place_type, place_type)
+
+    # Добавляем заглушку, если нет мест
+    if count == 0:
+        markup.add(InlineKeyboardButton(
+            'Нет доступных мест',
+            callback_data='no_places'
+        ))
 
     markup.add(InlineKeyboardButton('Назад', callback_data=f'cat_{category_id}'))
     msg = bot.send_message(call.message.chat.id, f'{type_display_name}:', reply_markup=markup)
@@ -232,42 +241,63 @@ def show_places_by_type(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('place_'))
 def show_address_details(call):
-    delete_previous_messages(call.message.chat.id)
-    _, category_id, place_id = call.data.split('_')
+    # Отправляем тестовое сообщение, чтобы проверить, доходит ли callback
+    bot.send_message(call.message.chat.id, f"🔍 Обработчик сработал! Data: {call.data}")
 
-    address_info = addresses[category_id][place_id]
-    coordinates = address_info['coordinates']
-    description = address_info['description']
-    photo_url = address_info.get('photo_url')
-    place_type = address_info.get('type', '')
+    try:
+        _, category_id, place_id = call.data.split('_')
 
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton('Назад', callback_data=f'type_{category_id}_{place_type}'))
+        # Проверяем, есть ли такое место
+        if category_id in addresses and place_id in addresses[category_id]:
+            address_info = addresses[category_id][place_id]
 
-    message_text = f"📍 {address_info['address']}\n\n📝 {description}"
+            bot.send_message(call.message.chat.id,
+                             f"✅ Место найдено!\n"
+                             f"Категория: {category_id}\n"
+                             f"ID: {place_id}\n"
+                             f"Название: {address_info['display_name']}")
 
-    if photo_url:
-        try:
-            photo_msg = bot.send_photo(call.message.chat.id, photo_url, caption=message_text, reply_markup=markup)
-            if call.message.chat.id not in message_ids:
-                message_ids[call.message.chat.id] = []
-            message_ids[call.message.chat.id].append(photo_msg.message_id)
-        except:
-            msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
-            if call.message.chat.id not in message_ids:
-                message_ids[call.message.chat.id] = []
-            message_ids[call.message.chat.id].append(msg.message_id)
-    else:
-        msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
-        if call.message.chat.id not in message_ids:
-            message_ids[call.message.chat.id] = []
-        message_ids[call.message.chat.id].append(msg.message_id)
+            delete_previous_messages(call.message.chat.id)
+            coordinates = address_info['coordinates']
+            description = address_info['description']
+            photo_url = address_info.get('photo_url')
+            place_type = address_info.get('type', '')
 
-    if coordinates and len(coordinates) == 2 and coordinates[0] is not None and coordinates[1] is not None:
-        location_msg = bot.send_location(call.message.chat.id, latitude=coordinates[0], longitude=coordinates[1])
-        if call.message.chat.id not in message_ids:
-            message_ids[call.message.chat.id] = []
-        message_ids[call.message.chat.id].append(location_msg.message_id)
+            markup = InlineKeyboardMarkup()
+            markup.add(InlineKeyboardButton('Назад', callback_data=f'type_{category_id}_{place_type}'))
+
+            message_text = f"📍 {address_info['address']}\n\n📝 {description}"
+
+            if photo_url:
+                try:
+                    photo_msg = bot.send_photo(call.message.chat.id, photo_url, caption=message_text,
+                                               reply_markup=markup)
+                    if call.message.chat.id not in message_ids:
+                        message_ids[call.message.chat.id] = []
+                    message_ids[call.message.chat.id].append(photo_msg.message_id)
+                except:
+                    msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
+                    if call.message.chat.id not in message_ids:
+                        message_ids[call.message.chat.id] = []
+                    message_ids[call.message.chat.id].append(msg.message_id)
+            else:
+                msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
+                if call.message.chat.id not in message_ids:
+                    message_ids[call.message.chat.id] = []
+                message_ids[call.message.chat.id].append(msg.message_id)
+
+            if coordinates and len(coordinates) == 2 and coordinates[0] is not None and coordinates[1] is not None:
+                location_msg = bot.send_location(call.message.chat.id, latitude=coordinates[0],
+                                                 longitude=coordinates[1])
+                if call.message.chat.id not in message_ids:
+                    message_ids[call.message.chat.id] = []
+                message_ids[call.message.chat.id].append(location_msg.message_id)
+        else:
+            bot.send_message(call.message.chat.id,
+                             f"❌ Место не найдено в базе данных!\nКатегория: {category_id}, ID: {place_id}")
+
+    except Exception as e:
+        bot.send_message(call.message.chat.id, f"❌ Ошибка: {str(e)}")
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'back_to_categories')
@@ -287,6 +317,12 @@ def back_to_categories(call):
     message_ids[call.message.chat.id].append(msg.message_id)
 
 
+# Обработчик для заглушки "Нет доступных мест"
+@bot.callback_query_handler(func=lambda call: call.data == 'no_places')
+def no_places_handler(call):
+    bot.answer_callback_query(call.id, "Здесь пока нет мест", show_alert=True)
+
+
 if __name__ == '__main__':
-    print("Бот запущен...")
+    print("Бот запущен с отладкой...")
     bot.polling()

@@ -30,7 +30,7 @@ id_to_category = {v: k for k, v in category_ids.items()}
 
 # Адреса по категориям
 addresses = {
-    'high': {  # Высокобюджетные маршруты
+    'high': {  # Высокобюджетная категория
         'заглушка1': {
             'address': 'Заглушка адреса',
             'coordinates': None,
@@ -69,11 +69,11 @@ addresses = {
             'photo_url': 'https://example.com/photo1.jpg'  # Пример URL фото
         },
         'питание': {
-            'address': 'ресторан быстрого питания "чайная ложка", Адрес: большая санкт петербургская, 25',
+            'address': 'ресторан быстрого питания "чайная ложка", Адрес: большая санкт петербургская, 25 в ТЦ "Русь" ',
             'coordinates': (58.533020, 31.267274),
             'description': 'Описание для ресторана',
             'display_name': 'Питание',
-            'photo_url': 'https://example.com/photo2.jpg'
+            'photo_url': 'https://ibb.co/4nTmZZQQ'
         },
         'бесплатные развлечения': {
             'address': 'Прогулка',

@@ -241,23 +241,24 @@ def show_places_by_type(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('place_'))
 def show_address_details(call):
-    # Отправляем тестовое сообщение, чтобы проверить, доходит ли callback
-    bot.send_message(call.message.chat.id, f"🔍 Обработчик сработал! Data: {call.data}")
+    # Отправляем тестовое сообщение
+    bot.send_message(call.message.chat.id, f"🔍 Нажата кнопка: {call.data}")
 
     try:
-        _, category_id, place_id = call.data.split('_')
+        # Разделяем данные, но берем первые 3 части, а остальное объединяем
+        parts = call.data.split('_')
+        prefix = parts[0]  # 'place'
+        category_id = parts[1]  # 'low' или 'high'
+        place_id = '_'.join(parts[2:])  # Всё что после 2 индекса - это ID места
+
+        bot.send_message(call.message.chat.id, f"🔎 Разобрано: category={category_id}, place={place_id}")
 
         # Проверяем, есть ли такое место
         if category_id in addresses and place_id in addresses[category_id]:
             address_info = addresses[category_id][place_id]
 
-            bot.send_message(call.message.chat.id,
-                             f"✅ Место найдено!\n"
-                             f"Категория: {category_id}\n"
-                             f"ID: {place_id}\n"
-                             f"Название: {address_info['display_name']}")
-
             delete_previous_messages(call.message.chat.id)
+
             coordinates = address_info['coordinates']
             description = address_info['description']
             photo_url = address_info.get('photo_url')
@@ -275,7 +276,8 @@ def show_address_details(call):
                     if call.message.chat.id not in message_ids:
                         message_ids[call.message.chat.id] = []
                     message_ids[call.message.chat.id].append(photo_msg.message_id)
-                except:
+                except Exception as e:
+                    bot.send_message(call.message.chat.id, f"Ошибка фото: {e}")
                     msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
                     if call.message.chat.id not in message_ids:
                         message_ids[call.message.chat.id] = []
@@ -293,8 +295,7 @@ def show_address_details(call):
                     message_ids[call.message.chat.id] = []
                 message_ids[call.message.chat.id].append(location_msg.message_id)
         else:
-            bot.send_message(call.message.chat.id,
-                             f"❌ Место не найдено в базе данных!\nКатегория: {category_id}, ID: {place_id}")
+            bot.send_message(call.message.chat.id, f"❌ Место не найдено!\nКатегория: {category_id}, ID: {place_id}")
 
     except Exception as e:
         bot.send_message(call.message.chat.id, f"❌ Ошибка: {str(e)}")

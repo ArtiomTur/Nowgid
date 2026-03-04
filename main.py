@@ -28,82 +28,133 @@ category_ids = {
 # Обратные соответствия
 id_to_category = {v: k for k, v in category_ids.items()}
 
-# Типы мест (для второго уровня меню) - ТОЛЬКО ТВОИ КАТЕГОРИИ
+# Типы мест (для второго уровня меню)
 place_types = {
-    'проживание': 'Проживание',
-    'питание': 'Питание',
-    'бесплатные': 'Бесплатные развлечения',
-    'платные': 'Платные развлечения'
+    'prozhivanie': '🏨 Проживание',
+    'pitanie': '🍽️ Питание',
+    'besplatnie': '🚶 Бесплатные развлечения',
+    'platnie': '🎟️ Платные развлечения'
 }
 
 # Адреса по категориям
 addresses = {
     'high': {  # Высокобюджетные маршруты (ЗАГЛУШКИ)
-        'заглушка1': {
-            'address': 'Заглушка адреса',
+        'prozhivanie_1': {
+            'address': 'Заглушка адреса для проживания 1',
             'coordinates': None,
-            'description': 'заглушка описания',
-            'display_name': 'Заглушка1',
+            'description': 'Заглушка описания для проживания 1',
+            'display_name': 'Заглушка Проживание 1',
             'photo_url': None,
-            'type': 'проживание'  # Добавил тип
+            'type': 'prozhivanie'
         },
-        'заглушка2': {
-            'address': 'Заглушка адреса2',
+        'prozhivanie_2': {
+            'address': 'Заглушка адреса для проживания 2',
             'coordinates': None,
-            'description': 'заглушка описания 2',
-            'display_name': 'Заглушка2',
+            'description': 'Заглушка описания для проживания 2',
+            'display_name': 'Заглушка Проживание 2',
             'photo_url': None,
-            'type': 'проживание'
+            'type': 'prozhivanie'
         },
-        'заглушка3': {
-            'address': 'Заглушка адреса 3',
+        'pitanie_1': {
+            'address': 'Заглушка адреса для питания 1',
             'coordinates': None,
-            'description': 'заглушка описания 3',
-            'display_name': 'Заглушка 3',
+            'description': 'Заглушка описания для питания 1',
+            'display_name': 'Заглушка Питание 1',
             'photo_url': None,
-            'type': 'питание'
+            'type': 'pitanie'
         },
-        'заглушка4': {
-            'address': 'Заглушка адреса 4',
+        'pitanie_2': {
+            'address': 'Заглушка адреса для питания 2',
             'coordinates': None,
-            'description': 'заглушка описания 4',
-            'display_name': 'Заглушка 4',
+            'description': 'Заглушка описания для питания 2',
+            'display_name': 'Заглушка Питание 2',
             'photo_url': None,
-            'type': 'питание'
+            'type': 'pitanie'
+        },
+        'besplatnie_1': {
+            'address': 'Заглушка адреса для бесплатных 1',
+            'coordinates': None,
+            'description': 'Заглушка описания для бесплатных 1',
+            'display_name': 'Заглушка Бесплатные 1',
+            'photo_url': None,
+            'type': 'besplatnie'
+        },
+        'platnie_1': {
+            'address': 'Заглушка адреса для платных 1',
+            'coordinates': None,
+            'description': 'Заглушка описания для платных 1',
+            'display_name': 'Заглушка Платные 1',
+            'photo_url': None,
+            'type': 'platnie'
         },
     },
-    'low': {  # Малобюджетные маршруты (ТВОИ ДАННЫЕ)
-        'проживание': {
+    'low': {  # Малобюджетные маршруты (ТВОИ ДАННЫЕ + ЗАГЛУШКИ)
+        # ТВОИ РЕАЛЬНЫЕ МЕСТА
+        'hoztel': {
             'address': 'хостел "турист", Адрес: ул. розважа, 11/1',
             'coordinates': (58.525747, 31.276239),
             'description': 'Описание хостела турист',
-            'display_name': 'Проживание',
+            'display_name': 'Хостел "Турист"',
             'photo_url': 'https://example.com/photo1.jpg',
-            'type': 'проживание'
+            'type': 'prozhivanie'
         },
-        'питание': {
-            'address': 'ресторан быстрого питания "чайная ложка", Адрес: большая санкт петербургская, 25 в ТЦ "Русь" ',
+        'chainaya_lozhka': {
+            'address': 'ресторан быстрого питания "чайная ложка", Адрес: большая санкт петербургская, 25 в ТЦ "Русь"',
             'coordinates': (58.533020, 31.267274),
             'description': 'Описание для ресторана',
-            'display_name': 'Питание',
+            'display_name': 'Чайная ложка',
             'photo_url': 'https://ibb.co/4nTmZZQQ',
-            'type': 'питание'
+            'type': 'pitanie'
         },
-        'бесплатные развлечения': {
-            'address': 'Прогулка',
+        'progulka': {
+            'address': 'Прогулка по кремлю и набережной',
             'coordinates': None,
             'description': 'Прогулка по кремлю и по набережной Александра Невского',
-            'display_name': 'Бесплатные развлечения',
+            'display_name': 'Прогулка',
             'photo_url': None,
-            'type': 'бесплатные'
+            'type': 'besplatnie'
         },
-        'платные развлечения': {
+        'kreml': {
             'address': 'территория Кремля, 14а.',
             'coordinates': (58.522660, 31.275844),
-            'description': ' экскурсия по грановитой палате',
-            'display_name': 'Платные развлечения',
+            'description': 'Экскурсия по грановитой палате',
+            'display_name': 'Грановитая палата',
             'photo_url': None,
-            'type': 'платные'
+            'type': 'platnie'
+        },
+
+        # ЗАГЛУШКИ (дополнительные варианты)
+        'prozhivanie_zaglushka1': {
+            'address': 'Заглушка адреса для проживания',
+            'coordinates': None,
+            'description': 'Заглушка описания для проживания',
+            'display_name': 'Проживание (заглушка)',
+            'photo_url': None,
+            'type': 'prozhivanie'
+        },
+        'pitanie_zaglushka1': {
+            'address': 'Заглушка адреса для питания',
+            'coordinates': None,
+            'description': 'Заглушка описания для питания',
+            'display_name': 'Питание (заглушка)',
+            'photo_url': None,
+            'type': 'pitanie'
+        },
+        'besplatnie_zaglushka1': {
+            'address': 'Заглушка адреса для бесплатных',
+            'coordinates': None,
+            'description': 'Заглушка описания для бесплатных',
+            'display_name': 'Бесплатно (заглушка)',
+            'photo_url': None,
+            'type': 'besplatnie'
+        },
+        'platnie_zaglushka1': {
+            'address': 'Заглушка адреса для платных',
+            'coordinates': None,
+            'description': 'Заглушка описания для платных',
+            'display_name': 'Платно (заглушка)',
+            'photo_url': None,
+            'type': 'platnie'
         }
     }
 }
@@ -146,7 +197,7 @@ def show_place_types(call):
         ))
 
     markup.add(InlineKeyboardButton('Назад', callback_data='back_to_categories'))
-    msg = bot.send_message(call.message.chat.id, f'Выберите категорию в {category_name}:', reply_markup=markup)
+    msg = bot.send_message(call.message.chat.id, f'Выберите категорию:', reply_markup=markup)
 
     if call.message.chat.id not in message_ids:
         message_ids[call.message.chat.id] = []
@@ -161,17 +212,18 @@ def show_places_by_type(call):
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
 
-    # Показываем только места выбранного типа
+    # Показываем все места выбранного типа
+    type_display_name = ""
     for place_id, place_info in addresses[category_id].items():
         if place_info.get('type') == place_type:
             markup.add(InlineKeyboardButton(
                 place_info['display_name'],
                 callback_data=f'place_{category_id}_{place_id}'
             ))
+            type_display_name = place_types.get(place_type, place_type)
 
     markup.add(InlineKeyboardButton('Назад', callback_data=f'cat_{category_id}'))
-    type_name = place_types.get(place_type, place_type)
-    msg = bot.send_message(call.message.chat.id, f'Доступные варианты:', reply_markup=markup)
+    msg = bot.send_message(call.message.chat.id, f'{type_display_name}:', reply_markup=markup)
 
     if call.message.chat.id not in message_ids:
         message_ids[call.message.chat.id] = []

@@ -214,22 +214,13 @@ def show_places_by_type(call):
 
     # Показываем все места выбранного типа
     type_display_name = ""
-    count = 0
     for place_id, place_info in addresses[category_id].items():
         if place_info.get('type') == place_type:
-            count += 1
             markup.add(InlineKeyboardButton(
                 place_info['display_name'],
                 callback_data=f'place_{category_id}_{place_id}'
             ))
             type_display_name = place_types.get(place_type, place_type)
-
-    # Добавляем заглушку, если нет мест
-    if count == 0:
-        markup.add(InlineKeyboardButton(
-            'Нет доступных мест',
-            callback_data='no_places'
-        ))
 
     markup.add(InlineKeyboardButton('Назад', callback_data=f'cat_{category_id}'))
     msg = bot.send_message(call.message.chat.id, f'{type_display_name}:', reply_markup=markup)
@@ -241,19 +232,12 @@ def show_places_by_type(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('place_'))
 def show_address_details(call):
-    # Отправляем тестовое сообщение
-    bot.send_message(call.message.chat.id, f"🔍 Нажата кнопка: {call.data}")
-
     try:
-        # Разделяем данные, но берем первые 3 части, а остальное объединяем
+        # Разделяем данные
         parts = call.data.split('_')
-        prefix = parts[0]  # 'place'
-        category_id = parts[1]  # 'low' или 'high'
-        place_id = '_'.join(parts[2:])  # Всё что после 2 индекса - это ID места
+        category_id = parts[1]
+        place_id = '_'.join(parts[2:])
 
-        bot.send_message(call.message.chat.id, f"🔎 Разобрано: category={category_id}, place={place_id}")
-
-        # Проверяем, есть ли такое место
         if category_id in addresses and place_id in addresses[category_id]:
             address_info = addresses[category_id][place_id]
 
@@ -276,8 +260,7 @@ def show_address_details(call):
                     if call.message.chat.id not in message_ids:
                         message_ids[call.message.chat.id] = []
                     message_ids[call.message.chat.id].append(photo_msg.message_id)
-                except Exception as e:
-                    bot.send_message(call.message.chat.id, f"Ошибка фото: {e}")
+                except:
                     msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
                     if call.message.chat.id not in message_ids:
                         message_ids[call.message.chat.id] = []
@@ -294,11 +277,8 @@ def show_address_details(call):
                 if call.message.chat.id not in message_ids:
                     message_ids[call.message.chat.id] = []
                 message_ids[call.message.chat.id].append(location_msg.message_id)
-        else:
-            bot.send_message(call.message.chat.id, f"❌ Место не найдено!\nКатегория: {category_id}, ID: {place_id}")
-
     except Exception as e:
-        bot.send_message(call.message.chat.id, f"❌ Ошибка: {str(e)}")
+        bot.send_message(call.message.chat.id, "Произошла ошибка. Пожалуйста, попробуйте снова.")
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'back_to_categories')
@@ -318,12 +298,6 @@ def back_to_categories(call):
     message_ids[call.message.chat.id].append(msg.message_id)
 
 
-# Обработчик для заглушки "Нет доступных мест"
-@bot.callback_query_handler(func=lambda call: call.data == 'no_places')
-def no_places_handler(call):
-    bot.answer_callback_query(call.id, "Здесь пока нет мест", show_alert=True)
-
-
 if __name__ == '__main__':
-    print("Бот запущен с отладкой...")
+    print("Бот запущен...")
     bot.polling()

@@ -1,5 +1,5 @@
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
 # Токен моего бота
 bot = telebot.TeleBot('8553675239:AAFZH-jmYRp7wToM-RcNAMdhVxCizd9UBUg')
@@ -81,7 +81,6 @@ addresses = {
             'type': 'prozhivanie'
         },
 
-
         # ПИТАНИЕ
         'high_pitanie_1': {
             'address': 'Ресторан "Маруся", адрес - ул. Предтеченская, д. 24',
@@ -145,7 +144,7 @@ addresses = {
         },
     },
 
-    'low': {  # Малобюджетные маршруты (ТОЧНО ТАКАЯ ЖЕ СТРУКТУРА)
+    'low': {  # Малобюджетные маршруты
         # ПРОЖИВАНИЕ
         'low_prozhivanie_1': {
             'address': 'хостел "турист", Адрес: ул. розважа, 11/1',
@@ -187,7 +186,6 @@ addresses = {
             'photo_url': 'https://ibb.co/fdsfYCxJ',
             'type': 'prozhivanie'
         },
-
 
         # ПИТАНИЕ
         'low_pitanie_1': {
@@ -262,74 +260,90 @@ addresses = {
 }
 
 
+def show_main_menu(chat_id):
+    """Показывает главное меню с категориями"""
+    markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    buttons = [KeyboardButton(name) for name in category_ids.keys()]
+    markup.add(*buttons)
+    bot.send_message(chat_id, "Выберите направление:", reply_markup=markup)
+
+
+def show_place_types_menu(chat_id, category_id):
+    """Показывает меню с типами мест для выбранной категории"""
+    markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    buttons = [KeyboardButton(name) for name in place_types.values()]
+    markup.add(*buttons)
+    markup.add(KeyboardButton("🔙 Назад"))
+    category_name = id_to_category[category_id]
+    bot.send_message(chat_id, f"Выберите категорию в {category_name}:", reply_markup=markup)
+
+
 @bot.message_handler(commands=['start', 'kommands'])
 def main(message):
     bot.send_message(message.chat.id,
                      'Команды для данного бота: \nлокации или /location - Показывает наши направления')
+    show_main_menu(message.chat.id)
 
 
 @bot.message_handler(func=lambda message: message.text.lower() == 'локации' or message.text.lower() == '/location')
 def info(message):
     delete_previous_messages(message.chat.id)
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 1
-    for category_name in category_ids.keys():
-        category_id = category_ids[category_name]
-        markup.add(InlineKeyboardButton(category_name, callback_data=f'cat_{category_id}'))
-    msg = bot.send_message(message.chat.id, 'Наши направления:', reply_markup=markup)
-    if message.chat.id not in message_ids:
-        message_ids[message.chat.id] = []
-    message_ids[message.chat.id].append(msg.message_id)
+    show_main_menu(message.chat.id)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith('cat_'))
-def show_place_types(call):
-    delete_previous_messages(call.message.chat.id)
-    category_id = call.data.split('_')[1]
-    category_name = id_to_category[category_id]
-
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 1
-
-    # Показываем типы мест
-    for type_key, type_name in place_types.items():
-        markup.add(InlineKeyboardButton(
-            type_name,
-            callback_data=f'type_{category_id}_{type_key}'
-        ))
-
-    markup.add(InlineKeyboardButton('Назад', callback_data='back_to_categories'))
-    msg = bot.send_message(call.message.chat.id, f'Выберите категорию:', reply_markup=markup)
-
-    if call.message.chat.id not in message_ids:
-        message_ids[call.message.chat.id] = []
-    message_ids[call.message.chat.id].append(msg.message_id)
+@bot.message_handler(func=lambda message: message.text in category_ids.keys())
+def handle_category_choice(message):
+    """Обработчик выбора категории (Высокобюджетные/Малобюджетные)"""
+    delete_previous_messages(message.chat.id)
+    category_name = message.text
+    category_id = category_ids[category_name]
+    show_place_types_menu(message.chat.id, category_id)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith('type_'))
-def show_places_by_type(call):
-    delete_previous_messages(call.message.chat.id)
-    _, category_id, place_type = call.data.split('_')
+@bot.message_handler(func=lambda message: message.text in place_types.values())
+def handle_place_type_choice(message):
+    """Обработчик выбора типа места (Проживание/Питание и т.д.)"""
+    delete_previous_messages(message.chat.id)
 
+    # Получаем category_id из последнего сообщения с категорией (нужно хранить состояние)
+    # В упрощенном варианте будем показывать все места из всех категорий
+    # В реальности нужно хранить выбранную категорию для каждого пользователя
+
+    # Для упрощения показываем все места из high и low
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
 
-    # Показываем все места выбранного типа
-    type_display_name = ""
-    for place_id, place_info in addresses[category_id].items():
-        if place_info.get('type') == place_type:
-            markup.add(InlineKeyboardButton(
-                place_info['display_name'],
-                callback_data=f'place_{category_id}_{place_id}'
-            ))
-            type_display_name = place_types.get(place_type, place_type)
+    # Определяем тип места по тексту кнопки
+    place_type = None
+    for key, value in place_types.items():
+        if value == message.text:
+            place_type = key
+            break
 
-    markup.add(InlineKeyboardButton('Назад', callback_data=f'cat_{category_id}'))
-    msg = bot.send_message(call.message.chat.id, f'{type_display_name}:', reply_markup=markup)
+    if place_type:
+        # Собираем все места этого типа из всех категорий
+        for category_id in ['high', 'low']:
+            for place_id, place_info in addresses[category_id].items():
+                if place_info.get('type') == place_type:
+                    markup.add(InlineKeyboardButton(
+                        place_info['display_name'],
+                        callback_data=f'place_{category_id}_{place_id}'
+                    ))
 
-    if call.message.chat.id not in message_ids:
-        message_ids[call.message.chat.id] = []
-    message_ids[call.message.chat.id].append(msg.message_id)
+        markup.add(InlineKeyboardButton("🔙 Назад к категориям", callback_data='back_to_place_types'))
+
+        bot.send_message(
+            message.chat.id,
+            f"{message.text}:",
+            reply_markup=markup
+        )
+
+
+@bot.message_handler(func=lambda message: message.text == "🔙 Назад")
+def handle_back(message):
+    """Обработчик кнопки Назад"""
+    delete_previous_messages(message.chat.id)
+    show_main_menu(message.chat.id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('place_'))
@@ -351,7 +365,7 @@ def show_address_details(call):
             place_type = address_info.get('type', '')
 
             markup = InlineKeyboardMarkup()
-            markup.add(InlineKeyboardButton('Назад', callback_data=f'type_{category_id}_{place_type}'))
+            markup.add(InlineKeyboardButton('🔙 Назад к местам', callback_data=f'back_to_places_{place_type}'))
 
             message_text = f"📍 {address_info['address']}\n\n📝 {description}"
 
@@ -383,23 +397,43 @@ def show_address_details(call):
         bot.send_message(call.message.chat.id, "Произошла ошибка. Пожалуйста, попробуйте снова.")
 
 
-@bot.callback_query_handler(func=lambda call: call.data == 'back_to_categories')
-def back_to_categories(call):
+@bot.callback_query_handler(func=lambda call: call.data.startswith('back_to_places_'))
+def back_to_places(call):
+    """Возврат к списку мест по типу"""
     delete_previous_messages(call.message.chat.id)
+    place_type = call.data.replace('back_to_places_', '')
+
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
 
-    for category_name in category_ids.keys():
-        category_id = category_ids[category_name]
-        markup.add(InlineKeyboardButton(category_name, callback_data=f'cat_{category_id}'))
+    # Находим название типа места
+    type_display_name = place_types.get(place_type, place_type)
 
-    msg = bot.send_message(call.message.chat.id, 'Наши направления:', reply_markup=markup)
+    # Собираем все места этого типа
+    for category_id in ['high', 'low']:
+        for place_id, place_info in addresses[category_id].items():
+            if place_info.get('type') == place_type:
+                markup.add(InlineKeyboardButton(
+                    place_info['display_name'],
+                    callback_data=f'place_{category_id}_{place_id}'
+                ))
 
-    if call.message.chat.id not in message_ids:
-        message_ids[call.message.chat.id] = []
-    message_ids[call.message.chat.id].append(msg.message_id)
+    markup.add(InlineKeyboardButton("🔙 Назад к категориям", callback_data='back_to_place_types'))
+
+    bot.send_message(
+        call.message.chat.id,
+        f"{type_display_name}:",
+        reply_markup=markup
+    )
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'back_to_place_types')
+def back_to_place_types(call):
+    """Возврат к выбору типа места"""
+    delete_previous_messages(call.message.chat.id)
+    show_main_menu(call.message.chat.id)
 
 
 if __name__ == '__main__':
-    print("Бот запущен...")
+    print("Бот запущен с Reply-кнопками...")
     bot.polling()

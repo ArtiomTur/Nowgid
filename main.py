@@ -14,7 +14,7 @@ def delete_previous_messages(chat_id):
         for msg_id in message_ids[chat_id]:
             try:
                 bot.delete_message(chat_id, msg_id)
-            except telebot.apihelper.ApiTelegramException:
+            except Exception:  # Исправлено: убрано telebot.apihelper.ApiTelegramException
                 pass
         message_ids[chat_id] = []
 
@@ -145,7 +145,7 @@ addresses = {
         },
     },
 
-    'low': {  # Малобюджетные маршруты (ТОЧНО ТАКАЯ ЖЕ СТРУКТУРА)
+    'low': {  # Малобюджетные маршруты
         # ПРОЖИВАНИЕ
         'low_prozhivanie_1': {
             'address': 'хостел "турист", Адрес: ул. розважа, 11/1',
@@ -187,7 +187,6 @@ addresses = {
             'photo_url': 'https://ibb.co/fdsfYCxJ',
             'type': 'prozhivanie'
         },
-
 
         # ПИТАНИЕ
         'low_pitanie_1': {
@@ -355,6 +354,7 @@ def show_address_details(call):
 
             message_text = f"📍 {address_info['address']}\n\n📝 {description}"
 
+            # Исправлено: добавляем сообщения в message_ids после отправки
             if photo_url:
                 try:
                     photo_msg = bot.send_photo(call.message.chat.id, photo_url, caption=message_text,
@@ -362,7 +362,8 @@ def show_address_details(call):
                     if call.message.chat.id not in message_ids:
                         message_ids[call.message.chat.id] = []
                     message_ids[call.message.chat.id].append(photo_msg.message_id)
-                except:
+                except Exception as e:
+                    print(f"Ошибка при отправке фото: {e}")
                     msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
                     if call.message.chat.id not in message_ids:
                         message_ids[call.message.chat.id] = []
@@ -380,6 +381,7 @@ def show_address_details(call):
                     message_ids[call.message.chat.id] = []
                 message_ids[call.message.chat.id].append(location_msg.message_id)
     except Exception as e:
+        print(f"Ошибка в show_address_details: {e}")
         bot.send_message(call.message.chat.id, "Произошла ошибка. Пожалуйста, попробуйте снова.")
 
 
@@ -402,4 +404,4 @@ def back_to_categories(call):
 
 if __name__ == '__main__':
     print("Бот запущен...")
-    bot.polling()
+    bot.polling(none_stop=True)  # Исправлено: добавлен none_stop=True для стабильной работы

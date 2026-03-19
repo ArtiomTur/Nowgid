@@ -4,46 +4,19 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 # Токен моего бота
 bot = telebot.TeleBot('8553675239:AAFZH-jmYRp7wToM-RcNAMdhVxCizd9UBUg')
 
-# Словарь для хранения ID единственного сообщения для каждого чата
-chat_message = {}
+# Словарь для хранения идентификаторов сообщений
+message_ids = {}
 
 
-# Функция для обновления сообщения (создает новое или редактирует существующее)
-def update_message(chat_id, text, markup=None):
-    if chat_id in chat_message:
-        try:
-            # Пытаемся отредактировать существующее сообщение
-            bot.edit_message_text(
-                text,
-                chat_id,
-                chat_message[chat_id],
-                reply_markup=markup
-            )
-            return chat_message[chat_id]
-        except:
-            # Если не получилось (сообщение удалено или слишком старое) - удаляем из словаря
-            del chat_message[chat_id]
-
-    # Если нет сообщения для редактирования - отправляем новое
-    msg = bot.send_message(chat_id, text, reply_markup=markup)
-    chat_message[chat_id] = msg.message_id
-    return msg.message_id
-
-
-# Функция для обновления с фото (создает новое или редактирует текст)
-def update_with_photo(chat_id, photo_url, caption, markup=None):
-    # Сначала удаляем старое сообщение с фото (если есть)
-    if chat_id in chat_message:
-        try:
-            bot.delete_message(chat_id, chat_message[chat_id])
-        except:
-            pass
-        del chat_message[chat_id]
-
-    # Отправляем новое фото
-    msg = bot.send_photo(chat_id, photo_url, caption=caption, reply_markup=markup)
-    chat_message[chat_id] = msg.message_id
-    return msg.message_id
+# Функция для удаления предыдущих сообщений
+def delete_previous_messages(chat_id):
+    if chat_id in message_ids:
+        for msg_id in message_ids[chat_id]:
+            try:
+                bot.delete_message(chat_id, msg_id)
+            except Exception:  # Исправлено: убрано telebot.apihelper.ApiTelegramException
+                pass
+        message_ids[chat_id] = []
 
 
 # Сокращённые идентификаторы для callback_data
@@ -63,7 +36,7 @@ place_types = {
     'platnie': '🎟️ Платные развлечения'
 }
 
-# Адреса по категориям (твои данные)
+# Адреса по категориям
 addresses = {
     'high': {  # Высокобюджетные маршруты
         # ПРОЖИВАНИЕ
@@ -107,6 +80,7 @@ addresses = {
             'photo_url': 'https://ibb.co/kVvp51tx',
             'type': 'prozhivanie'
         },
+
 
         # ПИТАНИЕ
         'high_pitanie_1': {
@@ -295,17 +269,21 @@ def main(message):
 
 @bot.message_handler(func=lambda message: message.text.lower() == 'локации' or message.text.lower() == '/location')
 def info(message):
+    delete_previous_messages(message.chat.id)
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
     for category_name in category_ids.keys():
         category_id = category_ids[category_name]
         markup.add(InlineKeyboardButton(category_name, callback_data=f'cat_{category_id}'))
-
-    update_message(message.chat.id, 'Наши направления:', markup)
+    msg = bot.send_message(message.chat.id, 'Наши направления:', reply_markup=markup)
+    if message.chat.id not in message_ids:
+        message_ids[message.chat.id] = []
+    message_ids[message.chat.id].append(msg.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('cat_'))
 def show_place_types(call):
+    delete_previous_messages(call.message.chat.id)
     category_id = call.data.split('_')[1]
     category_name = id_to_category[category_id]
 
@@ -320,12 +298,16 @@ def show_place_types(call):
         ))
 
     markup.add(InlineKeyboardButton('Назад', callback_data='back_to_categories'))
+    msg = bot.send_message(call.message.chat.id, f'Выберите категорию:', reply_markup=markup)
 
-    update_message(call.message.chat.id, f'Выберите категорию:', markup)
+    if call.message.chat.id not in message_ids:
+        message_ids[call.message.chat.id] = []
+    message_ids[call.message.chat.id].append(msg.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('type_'))
 def show_places_by_type(call):
+    delete_previous_messages(call.message.chat.id)
     _, category_id, place_type = call.data.split('_')
 
     markup = InlineKeyboardMarkup()
@@ -342,8 +324,11 @@ def show_places_by_type(call):
             type_display_name = place_types.get(place_type, place_type)
 
     markup.add(InlineKeyboardButton('Назад', callback_data=f'cat_{category_id}'))
+    msg = bot.send_message(call.message.chat.id, f'{type_display_name}:', reply_markup=markup)
 
-    update_message(call.message.chat.id, f'{type_display_name}:', markup)
+    if call.message.chat.id not in message_ids:
+        message_ids[call.message.chat.id] = []
+    message_ids[call.message.chat.id].append(msg.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('place_'))
@@ -357,6 +342,8 @@ def show_address_details(call):
         if category_id in addresses and place_id in addresses[category_id]:
             address_info = addresses[category_id][place_id]
 
+            delete_previous_messages(call.message.chat.id)
+
             coordinates = address_info['coordinates']
             description = address_info['description']
             photo_url = address_info.get('photo_url')
@@ -367,22 +354,40 @@ def show_address_details(call):
 
             message_text = f"📍 {address_info['address']}\n\n📝 {description}"
 
+            # Исправлено: добавляем сообщения в message_ids после отправки
             if photo_url:
-                # Для фото всегда создаем новое сообщение (удаляем старое)
-                update_with_photo(call.message.chat.id, photo_url, message_text, markup)
+                try:
+                    photo_msg = bot.send_photo(call.message.chat.id, photo_url, caption=message_text,
+                                               reply_markup=markup)
+                    if call.message.chat.id not in message_ids:
+                        message_ids[call.message.chat.id] = []
+                    message_ids[call.message.chat.id].append(photo_msg.message_id)
+                except Exception as e:
+                    print(f"Ошибка при отправке фото: {e}")
+                    msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
+                    if call.message.chat.id not in message_ids:
+                        message_ids[call.message.chat.id] = []
+                    message_ids[call.message.chat.id].append(msg.message_id)
             else:
-                # Для текста - редактируем
-                update_message(call.message.chat.id, message_text, markup)
+                msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
+                if call.message.chat.id not in message_ids:
+                    message_ids[call.message.chat.id] = []
+                message_ids[call.message.chat.id].append(msg.message_id)
 
             if coordinates and len(coordinates) == 2 and coordinates[0] is not None and coordinates[1] is not None:
-                # Отправляем локацию отдельно (её нельзя встроить в сообщение)
-                bot.send_location(call.message.chat.id, latitude=coordinates[0], longitude=coordinates[1])
+                location_msg = bot.send_location(call.message.chat.id, latitude=coordinates[0],
+                                                 longitude=coordinates[1])
+                if call.message.chat.id not in message_ids:
+                    message_ids[call.message.chat.id] = []
+                message_ids[call.message.chat.id].append(location_msg.message_id)
     except Exception as e:
+        print(f"Ошибка в show_address_details: {e}")
         bot.send_message(call.message.chat.id, "Произошла ошибка. Пожалуйста, попробуйте снова.")
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'back_to_categories')
 def back_to_categories(call):
+    delete_previous_messages(call.message.chat.id)
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
 
@@ -390,9 +395,13 @@ def back_to_categories(call):
         category_id = category_ids[category_name]
         markup.add(InlineKeyboardButton(category_name, callback_data=f'cat_{category_id}'))
 
-    update_message(call.message.chat.id, 'Наши направления:', markup)
+    msg = bot.send_message(call.message.chat.id, 'Наши направления:', reply_markup=markup)
+
+    if call.message.chat.id not in message_ids:
+        message_ids[call.message.chat.id] = []
+    message_ids[call.message.chat.id].append(msg.message_id)
 
 
 if __name__ == '__main__':
-    print("Бот запущен в режиме одного сообщения...")
-    bot.polling()
+    print("Бот запущен...")
+    bot.polling(none_stop=True)  # Исправлено: добавлен none_stop=True для стабильной работы

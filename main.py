@@ -1,14 +1,23 @@
-from flask import Flask, request
 import telebot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
-import os
 
-TOKEN = '8553675239:AAFZH-jmYRp7wToM-RcNAMdhVxCizd9UBUg'
-bot = telebot.TeleBot(TOKEN)
-app = Flask(__name__)
+# Токен моего бота
+bot = telebot.TeleBot('8553675239:AAFZH-jmYRp7wToM-RcNAMdhVxCizd9UBUg')
 
 # Словарь для хранения идентификаторов сообщений
 message_ids = {}
+
+
+# Функция для удаления предыдущих сообщений
+def delete_previous_messages(chat_id):
+    if chat_id in message_ids:
+        for msg_id in message_ids[chat_id]:
+            try:
+                bot.delete_message(chat_id, msg_id)
+            except Exception:
+                pass
+        message_ids[chat_id] = []
+
 
 # Сокращённые идентификаторы для callback_data
 category_ids = {
@@ -27,7 +36,7 @@ place_types = {
     'platnie': '🎟️ Платные развлечения'
 }
 
-# Адреса по категориям (ПОЛНАЯ ВЕРСИЯ, КАК У ТЕБЯ)
+# Адреса по категориям (твои полные данные)
 addresses = {
     'high': {  # Высокобюджетные маршруты
         # ПРОЖИВАНИЕ
@@ -254,21 +263,26 @@ addresses = {
 @bot.message_handler(commands=['start', 'kommands'])
 def main(message):
     bot.send_message(message.chat.id,
-                     'Команды для данного бота: \n/location - Показывает наши направления')
+                     'Команды для данного бота: \nлокации или /location - Показывает наши направления')
 
 
-@bot.message_handler(commands=['location'])
+@bot.message_handler(func=lambda message: message.text.lower() == 'локации' or message.text.lower() == '/location')
 def info(message):
+    delete_previous_messages(message.chat.id)
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
     for category_name in category_ids.keys():
         category_id = category_ids[category_name]
         markup.add(InlineKeyboardButton(category_name, callback_data=f'cat_{category_id}'))
-    bot.send_message(message.chat.id, 'Наши направления:', reply_markup=markup)
+    msg = bot.send_message(message.chat.id, 'Наши направления:', reply_markup=markup)
+    if message.chat.id not in message_ids:
+        message_ids[message.chat.id] = []
+    message_ids[message.chat.id].append(msg.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('cat_'))
 def show_place_types(call):
+    delete_previous_messages(call.message.chat.id)
     category_id = call.data.split('_')[1]
     category_name = id_to_category[category_id]
 
@@ -282,16 +296,16 @@ def show_place_types(call):
         ))
 
     markup.add(InlineKeyboardButton('Назад', callback_data='back_to_categories'))
-    bot.edit_message_text(
-        f'Выберите категорию:',
-        call.message.chat.id,
-        call.message.message_id,
-        reply_markup=markup
-    )
+    msg = bot.send_message(call.message.chat.id, f'Выберите категорию:', reply_markup=markup)
+
+    if call.message.chat.id not in message_ids:
+        message_ids[call.message.chat.id] = []
+    message_ids[call.message.chat.id].append(msg.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('type_'))
 def show_places_by_type(call):
+    delete_previous_messages(call.message.chat.id)
     _, category_id, place_type = call.data.split('_')
 
     markup = InlineKeyboardMarkup()
@@ -307,12 +321,11 @@ def show_places_by_type(call):
             type_display_name = place_types.get(place_type, place_type)
 
     markup.add(InlineKeyboardButton('Назад', callback_data=f'cat_{category_id}'))
-    bot.edit_message_text(
-        f'{type_display_name}:',
-        call.message.chat.id,
-        call.message.message_id,
-        reply_markup=markup
-    )
+    msg = bot.send_message(call.message.chat.id, f'{type_display_name}:', reply_markup=markup)
+
+    if call.message.chat.id not in message_ids:
+        message_ids[call.message.chat.id] = []
+    message_ids[call.message.chat.id].append(msg.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('place_'))
@@ -324,6 +337,8 @@ def show_address_details(call):
 
         if category_id in addresses and place_id in addresses[category_id]:
             address_info = addresses[category_id][place_id]
+
+            delete_previous_messages(call.message.chat.id)
 
             coordinates = address_info['coordinates']
             description = address_info['description']
@@ -337,21 +352,37 @@ def show_address_details(call):
 
             if photo_url:
                 try:
-                    bot.send_photo(call.message.chat.id, photo_url, caption=message_text, reply_markup=markup)
+                    photo_msg = bot.send_photo(call.message.chat.id, photo_url, caption=message_text,
+                                               reply_markup=markup)
+                    if call.message.chat.id not in message_ids:
+                        message_ids[call.message.chat.id] = []
+                    message_ids[call.message.chat.id].append(photo_msg.message_id)
                 except Exception as e:
-                    bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
+                    print(f"Ошибка при отправке фото: {e}")
+                    msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
+                    if call.message.chat.id not in message_ids:
+                        message_ids[call.message.chat.id] = []
+                    message_ids[call.message.chat.id].append(msg.message_id)
             else:
-                bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
+                msg = bot.send_message(call.message.chat.id, message_text, reply_markup=markup)
+                if call.message.chat.id not in message_ids:
+                    message_ids[call.message.chat.id] = []
+                message_ids[call.message.chat.id].append(msg.message_id)
 
             if coordinates and len(coordinates) == 2 and coordinates[0] is not None and coordinates[1] is not None:
-                bot.send_location(call.message.chat.id, latitude=coordinates[0], longitude=coordinates[1])
+                location_msg = bot.send_location(call.message.chat.id, latitude=coordinates[0],
+                                                 longitude=coordinates[1])
+                if call.message.chat.id not in message_ids:
+                    message_ids[call.message.chat.id] = []
+                message_ids[call.message.chat.id].append(location_msg.message_id)
     except Exception as e:
-        print(f"Ошибка: {e}")
+        print(f"Ошибка в show_address_details: {e}")
         bot.send_message(call.message.chat.id, "Произошла ошибка. Пожалуйста, попробуйте снова.")
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'back_to_categories')
 def back_to_categories(call):
+    delete_previous_messages(call.message.chat.id)
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
 
@@ -359,48 +390,13 @@ def back_to_categories(call):
         category_id = category_ids[category_name]
         markup.add(InlineKeyboardButton(category_name, callback_data=f'cat_{category_id}'))
 
-    bot.edit_message_text(
-        'Наши направления:',
-        call.message.chat.id,
-        call.message.message_id,
-        reply_markup=markup
-    )
+    msg = bot.send_message(call.message.chat.id, 'Наши направления:', reply_markup=markup)
 
-
-# Flask эндпоинты для Render
-@app.route(f'/{TOKEN}', methods=['POST'])
-def webhook():
-    try:
-        json_str = request.get_data().decode('UTF-8')
-        update = telebot.types.Update.de_json(json_str)
-        bot.process_new_updates([update])
-        return 'ok', 200
-    except Exception as e:
-        print(f"Ошибка вебхука: {e}")
-        return 'error', 500
-
-
-@app.route('/health')
-def health():
-    return 'ok', 200
-
-
-@app.route('/')
-def index():
-    return 'Bot is running!', 200
-
-
-def set_webhook():
-    try:
-        webhook_url = f"https://{os.environ.get('RENDER_EXTERNAL_URL')}/{TOKEN}"
-        bot.remove_webhook()
-        bot.set_webhook(url=webhook_url)
-        print(f"Webhook set: {webhook_url}")
-    except Exception as e:
-        print(f"Ошибка установки вебхука: {e}")
+    if call.message.chat.id not in message_ids:
+        message_ids[call.message.chat.id] = []
+    message_ids[call.message.chat.id].append(msg.message_id)
 
 
 if __name__ == '__main__':
-    set_webhook()
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    print("Бот запущен...")
+    bot.polling(non_stop=True)

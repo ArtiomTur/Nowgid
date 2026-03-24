@@ -1,15 +1,13 @@
+from flask import Flask, request
 import telebot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
-from flask import Flask, request
 import os
-import json
 
-# Токен моего бота
 TOKEN = '8553675239:AAFZH-jmYRp7wToM-RcNAMdhVxCizd9UBUg'
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
-# Словарь для хранения идентификаторов сообщений (упрощён для вебхука)
+# Словарь для хранения идентификаторов сообщений
 message_ids = {}
 
 # Сокращённые идентификаторы для callback_data
@@ -29,7 +27,7 @@ place_types = {
     'platnie': '🎟️ Платные развлечения'
 }
 
-# Адреса по категориям (твой полный словарь)
+# Адреса по категориям (ПОЛНАЯ ВЕРСИЯ, КАК У ТЕБЯ)
 addresses = {
     'high': {  # Высокобюджетные маршруты
         # ПРОЖИВАНИЕ
@@ -256,10 +254,10 @@ addresses = {
 @bot.message_handler(commands=['start', 'kommands'])
 def main(message):
     bot.send_message(message.chat.id,
-                     'Команды для данного бота: \nлокации или /location - Показывает наши направления')
+                     'Команды для данного бота: \n/location - Показывает наши направления')
 
 
-@bot.message_handler(func=lambda message: message.text.lower() == 'локации' or message.text.lower() == '/location')
+@bot.message_handler(commands=['location'])
 def info(message):
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
@@ -337,7 +335,6 @@ def show_address_details(call):
 
             message_text = f"📍 {address_info['address']}\n\n📝 {description}"
 
-            # Отправляем новое сообщение с деталями
             if photo_url:
                 try:
                     bot.send_photo(call.message.chat.id, photo_url, caption=message_text, reply_markup=markup)
@@ -370,7 +367,7 @@ def back_to_categories(call):
     )
 
 
-# Flask вебхук для Render
+# Flask эндпоинты для Render
 @app.route(f'/{TOKEN}', methods=['POST'])
 def webhook():
     try:
@@ -398,7 +395,7 @@ def set_webhook():
         webhook_url = f"https://{os.environ.get('RENDER_EXTERNAL_URL')}/{TOKEN}"
         bot.remove_webhook()
         bot.set_webhook(url=webhook_url)
-        print(f"Вебхук установлен: {webhook_url}")
+        print(f"Webhook set: {webhook_url}")
     except Exception as e:
         print(f"Ошибка установки вебхука: {e}")
 

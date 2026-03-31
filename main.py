@@ -21,7 +21,7 @@ def delete_previous_messages(chat_id):
 
 # Сокращённые идентификаторы для callback_data
 category_ids = {
-    'Высокобюджетные варианты': 'high',
+    'Высокобюджетные вариаyты': 'high',
     'Малобюджетные варианты': 'low'
 }
 
